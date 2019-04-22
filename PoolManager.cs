@@ -6,7 +6,7 @@ public static class PoolManager
     private readonly static Dictionary<GameObject, Pool> pools=new Dictionary<GameObject, Pool>();
 
     /// <summary>
-    /// Linked List node associated with each Instance IDs
+    /// Linked List node associated with each GameObject Instances
     /// </summary>
     private readonly static Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>> nodes = new Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>>();
 

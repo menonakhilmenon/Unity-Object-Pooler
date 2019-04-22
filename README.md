@@ -7,7 +7,7 @@ Simply download the PoolManager.cs file into your Unity project and you are good
 
 # Usage
 
-To instantiate a GameObject with poolmanager simply use PoolManager.Instantiate function which returns the instantiated gameobject.The transform and all can then be modified within the code itself.
+To instantiate a GameObject with poolmanager simply use PoolManager.Instantiate function instead of the normal Object.Instantiate function.
 
 To destroy a GameObject with poolmanager simply use PoolManager.Destroy function. This simply sets the gameobject to be inactive and will be returned to the pool so it may be reused later.
 

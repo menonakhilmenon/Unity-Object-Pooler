@@ -8,7 +8,9 @@ public static class PoolManager
     /// <summary>
     /// Linked List node associated with each Instance IDs
     /// </summary>
-    private readonly static Dictionary<int, KeyValuePair<Pool,LinkedListNode<GameObject>>> nodes = new Dictionary<int, KeyValuePair<Pool,LinkedListNode<GameObject>>>();
+    private readonly static Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>> nodes = new Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>>();
+
+    public static int globalPoolSize = 10;
 
     /// <summary>
     /// Instantiate a gameobject into the pool transform and other stuff needs to be set via script
@@ -29,10 +31,54 @@ public static class PoolManager
         }
 
         LinkedListNode<GameObject> node=t.InsertToPool(prefab);
-        if(!nodes.ContainsKey(node.Value.GetInstanceID()))
-            nodes.Add(node.Value.GetInstanceID(), new KeyValuePair<Pool, LinkedListNode<GameObject>>(t, node));
+        if(!nodes.ContainsKey(node.Value))
+            nodes.Add(node.Value, new KeyValuePair<Pool, LinkedListNode<GameObject>>(t, node));
         return node.Value;
     }
+
+
+    #region Instantiate Overloads
+
+    public static GameObject Instantiate(GameObject prefab,Transform parent)
+    {
+        GameObject obj = Instantiate(prefab);
+
+        obj.transform.parent = parent;
+        return obj;
+    }
+
+
+    public static GameObject Instantiate(GameObject prefab,Vector3 position,Quaternion rotation)
+    {
+        GameObject obj = Instantiate(prefab);
+
+        obj.transform.position = position;
+        obj.transform.rotation = rotation;
+
+        return obj;
+    }
+    public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation,Transform parent)
+    {
+        GameObject obj = Instantiate(prefab);
+        obj.transform.parent = parent;
+        obj.transform.position = position;
+        obj.transform.rotation = rotation;
+        return obj;
+    }
+
+    public static GameObject Instantiate(GameObject prefab, Transform parent,bool instantiateInWorldSpace)
+    {
+        GameObject obj = Instantiate(prefab);
+
+        obj.transform.parent = parent;
+        obj.transform.position = parent.transform.position;
+        obj.transform.rotation = parent.transform.rotation;
+        obj.transform.localScale = Vector3.one;
+        return obj;
+    }
+
+    #endregion
+
 
     /// <summary>
     /// Gives access to object pool of the prefab
@@ -69,6 +115,7 @@ public static class PoolManager
     /// </summary>
     public static GameObject InstantiateGrowing(GameObject prefab)
     {
+        GameObject obj;
         Pool t;
         if (!pools.ContainsKey(prefab))
         {
@@ -78,9 +125,14 @@ public static class PoolManager
         {
             t = pools[prefab];
         }
-        t.growing = true;
-        GameObject obj=Instantiate(prefab);
-        t.growing = false;
+        if (t.growing != true)
+        {
+            t.growing = true;
+            obj = Instantiate(prefab);
+            t.growing = false;
+        }
+        else
+            obj = Instantiate(prefab);
         return obj;
     }
 
@@ -107,10 +159,10 @@ public static class PoolManager
     /// </summary>
     public static void Destroy(GameObject obj)
     {
-        if (nodes.ContainsKey(obj.GetInstanceID()))
-            nodes[obj.GetInstanceID()].Key.RemoveObjectFromPool(nodes[obj.GetInstanceID()].Value);
+        if (nodes.ContainsKey(obj))
+            nodes[obj].Key.RemoveObjectFromPool(nodes[obj].Value);
         else
-            Destroy(obj);
+            Object.Destroy(obj);
     }
 
     public  class Pool
@@ -124,6 +176,13 @@ public static class PoolManager
 
         public LinkedList<GameObject> activeObjects=new LinkedList<GameObject>();
         public LinkedList<GameObject> inactiveObjects = new LinkedList<GameObject>();
+
+
+        public Pool()
+        {
+            poolSize = globalPoolSize;
+        }
+
         public LinkedListNode<GameObject> InsertToPool(GameObject gameObject)
         {
             LinkedListNode<GameObject> node;

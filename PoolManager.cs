@@ -11,6 +11,7 @@ public static class PoolManager
     private readonly static Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>> nodes = new Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>>();
 
     public static int globalPoolSize = 20;
+    public static int globalNetPoolSize = 30;
 
     /// <summary>
     /// Instantiate a gameobject into the pool transform and other stuff needs to be set via script
@@ -189,6 +190,15 @@ public static class PoolManager
         t.netPoolSize = size;
     }
 
+    public static void RemoveObjectFromPool(GameObject obj)
+    {
+        if (nodes.ContainsKey(obj))
+        {
+            nodes[obj].Key.RemoveObjectFromPool(nodes[obj].Value);
+            nodes.Remove(obj);
+        }
+    }
+
 
 
     /// <summary>
@@ -197,7 +207,20 @@ public static class PoolManager
     public static void Destroy(GameObject obj)
     {
         if (nodes.ContainsKey(obj))
-            nodes[obj].Key.RemoveObjectFromPool(nodes[obj].Value);
+        {
+            Pool pool = nodes[obj].Key;
+            LinkedListNode<GameObject> node=nodes[obj].Value;
+
+            if (pool.totalCount > pool.netPoolSize)
+            {
+                pool.RemoveObjectFromPool(node);
+                Object.Destroy(obj);
+            }
+            else
+            {
+                pool.Destroy(node);
+            }
+        }
         else
             Object.Destroy(obj);
     }
@@ -209,7 +232,7 @@ public static class PoolManager
         /// </summary>
         public bool growing = false;
         public int poolSize = 10;
-        public int netPoolSize = 20;
+        public int netPoolSize = 30;
 
         public int activeCount
         {
@@ -234,6 +257,7 @@ public static class PoolManager
         public Pool()
         {
             poolSize = globalPoolSize;
+            netPoolSize = Mathf.Max(globalNetPoolSize,globalPoolSize);
         }
 
         public Pool(int poolSize)
@@ -248,7 +272,7 @@ public static class PoolManager
             if (!growing)
             {
                 if (activeCount >= poolSize)
-                    RemoveObjectFromPool();
+                    Destroy();
             }
 
             if (inactiveObjects.Count > 0)
@@ -265,7 +289,7 @@ public static class PoolManager
             }
             return node;
         }
-        public void RemoveObjectFromPool()
+        public void Destroy()
         {
             if (activeObjects.Count > 0)
             {
@@ -275,21 +299,34 @@ public static class PoolManager
                 inactiveObjects.AddLast(node);
             }
         }
-        public void RemoveObjectFromPool(LinkedListNode<GameObject> node)
+        public void Destroy(LinkedListNode<GameObject> node)
         {
-            activeObjects.Remove(node);
-            
-            if(totalCount > netPoolSize)
+            if (node.List == inactiveObjects)
             {
-                Object.Destroy(node.Value);
-            }
-            else
-            {
-                inactiveObjects.AddLast(node);
                 node.Value.SetActive(false);
+                return;
             }
+            activeObjects.Remove(node);
+
+            inactiveObjects.AddLast(node);
 
         }
+
+        /// <summary>
+        /// Removes the node from the respective list and hence pool
+        /// </summary>
+        public void RemoveObjectFromPool(LinkedListNode<GameObject> node)
+        {
+            if (node.List == activeObjects)
+            {
+                activeObjects.Remove(node);
+            }
+            else if (node.List == inactiveObjects)
+            {
+                inactiveObjects.Remove(node);
+            }
+        }
+
 
         /// <summary>
         /// Destroys all inactive GameObjects in the pool.

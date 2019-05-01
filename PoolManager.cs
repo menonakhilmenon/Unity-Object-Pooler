@@ -10,7 +10,7 @@ public static class PoolManager
     /// </summary>
     private readonly static Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>> nodes = new Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>>();
 
-    public static int globalPoolSize = 10;
+    public static int globalPoolSize = 20;
 
     /// <summary>
     /// Instantiate a gameobject into the pool transform and other stuff needs to be set via script
@@ -80,6 +80,24 @@ public static class PoolManager
     #endregion
 
 
+
+
+    public static Pool CreatePool(GameObject prefab,int poolSize)
+    {
+        Pool newPool;
+        if (pools.ContainsKey(prefab))
+        {
+            newPool = pools[prefab];
+        }
+        else
+        {
+            newPool = new Pool();
+            pools.Add(prefab, newPool);
+        }
+        newPool.poolSize = Mathf.Max(poolSize, newPool.poolSize);
+        return newPool;
+    }
+
     /// <summary>
     /// Gives access to object pool of the prefab
     /// </summary>
@@ -138,7 +156,7 @@ public static class PoolManager
 
 
     /// <summary>
-    /// Sets the PoolSize of the prefab
+    /// Sets the number of active objects in the pool for the prefab at any given time
     /// </summary>
     public static void SetPoolSize(GameObject prefab,int size)
     {
@@ -155,6 +173,25 @@ public static class PoolManager
     }
 
     /// <summary>
+    /// Sets the total number of objects in the pool for the prefab at any given time including booth active and inactive
+    /// </summary>
+    public static void SetNetPoolSize(GameObject prefab, int size)
+    {
+        Pool t;
+        if (!pools.ContainsKey(prefab))
+        {
+            pools.Add(prefab, t = new Pool());
+        }
+        else
+        {
+            t = pools[prefab];
+        }
+        t.netPoolSize = size;
+    }
+
+
+
+    /// <summary>
     /// Destroy a pool Object.(Sets it inactive until another pool object is to be instantiated).If not in pool it is destroyed normally.
     /// </summary>
     public static void Destroy(GameObject obj)
@@ -167,14 +204,30 @@ public static class PoolManager
 
     public  class Pool
     {
+        /// <summary>
+        /// If set true the pool will not forcefully recycle gameObjects if pool is full
+        /// </summary>
         public bool growing = false;
         public int poolSize = 10;
+        public int netPoolSize = 20;
+
         public int activeCount
         {
             get { return activeObjects.Count; }
         }
 
+        public int totalCount
+        {
+            get { return activeObjects.Count + inactiveObjects.Count; }
+        }
+
+        /// <summary>
+        /// Linked list corresponding to the active gameObjects in the pool
+        /// </summary>
         public LinkedList<GameObject> activeObjects=new LinkedList<GameObject>();
+        /// <summary>
+        /// Linked list corresponding to the objects which have been "Destroyed" and is waiting in pool to be reused
+        /// </summary>
         public LinkedList<GameObject> inactiveObjects = new LinkedList<GameObject>();
 
 
@@ -182,6 +235,12 @@ public static class PoolManager
         {
             poolSize = globalPoolSize;
         }
+
+        public Pool(int poolSize)
+        {
+            this.poolSize = poolSize;
+        }
+
 
         public LinkedListNode<GameObject> InsertToPool(GameObject gameObject)
         {
@@ -219,8 +278,30 @@ public static class PoolManager
         public void RemoveObjectFromPool(LinkedListNode<GameObject> node)
         {
             activeObjects.Remove(node);
-            inactiveObjects.AddLast(node);
-            node.Value.SetActive(false);
+            
+            if(totalCount > netPoolSize)
+            {
+                Object.Destroy(node.Value);
+            }
+            else
+            {
+                inactiveObjects.AddLast(node);
+                node.Value.SetActive(false);
+            }
+
+        }
+
+        /// <summary>
+        /// Destroys all inactive GameObjects in the pool.
+        /// </summary>
+        public void ClearInactive()
+        {
+            while (inactiveObjects.Count != 0)
+            {
+                GameObject obj = inactiveObjects.First.Value;
+                inactiveObjects.RemoveFirst();
+                Object.Destroy(obj);
+            }
         }
     }
 }

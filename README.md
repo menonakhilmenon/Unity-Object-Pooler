@@ -13,9 +13,12 @@ To destroy a GameObject with poolmanager simply use PoolManager.Destroy function
 
 Make sure all initialization code of the objects to be pooled are written in the OnEnable method and all code for deinitialization are written in OnDisable and NOT in Start and Destroy respectively.
 
+
+
+
 # Remarks
 
-By default the poolsize is set to 10 and can be changed for each GameObjects independently by using the PoolManager.SetPoolSize function.
+By default the globalPoolsize is set to 20 and can be changed for each GameObjects independently by using the PoolManager.SetPoolSize function or by changing the value of the static int globalPoolSize directly. Similarly a globalNetPoolSize exists which can be used to set the total number of objects in pool including the inactive ones.
 
 To instantiate a GameObject by growing the pool simply use PoolManager.InstantiateGrowing function.If this is not used then the first gameObject which was created in the pool which is currently active will be forcefully reused here.
 

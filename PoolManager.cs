@@ -230,7 +230,7 @@ public static class PoolManager
         /// <summary>
         /// If set true the pool will not forcefully recycle gameObjects if pool is full
         /// </summary>
-        public bool growing = false;
+        public bool growing = true;
         public int poolSize = 10;
         public int netPoolSize = 30;
 
@@ -301,9 +301,10 @@ public static class PoolManager
         }
         public void Destroy(LinkedListNode<GameObject> node)
         {
+            node.Value.SetActive(false);
+
             if (node.List == inactiveObjects)
             {
-                node.Value.SetActive(false);
                 return;
             }
             activeObjects.Remove(node);

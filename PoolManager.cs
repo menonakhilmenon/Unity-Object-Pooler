@@ -3,12 +3,12 @@ using UnityEngine;
 
 public static class PoolManager
 {
-    private readonly static Dictionary<GameObject, Pool> pools=new Dictionary<GameObject, Pool>();
+    private readonly static Dictionary<GameObject, Pool> pools = new Dictionary<GameObject, Pool>();
 
     /// <summary>
     /// Linked List node associated with each GameObject Instances
     /// </summary>
-    private readonly static Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>> nodes = new Dictionary<GameObject, KeyValuePair<Pool,LinkedListNode<GameObject>>>();
+    private readonly static Dictionary<GameObject, KeyValuePair<Pool, LinkedListNode<GameObject>>> nodes = new Dictionary<GameObject, KeyValuePair<Pool, LinkedListNode<GameObject>>>();
 
     public static int globalPoolSize = 20;
     public static int globalNetPoolSize = 30;
@@ -23,7 +23,7 @@ public static class PoolManager
         Pool t;
         if (!pools.ContainsKey(prefab))
         {
-            pools.Add(prefab,t = new Pool());
+            pools.Add(prefab, t = new Pool());
 
         }
         else
@@ -31,8 +31,8 @@ public static class PoolManager
             t = pools[prefab];
         }
 
-        LinkedListNode<GameObject> node=t.InsertToPool(prefab);
-        if(!nodes.ContainsKey(node.Value))
+        LinkedListNode<GameObject> node = t.InsertToPool(prefab);
+        if (!nodes.ContainsKey(node.Value))
             nodes.Add(node.Value, new KeyValuePair<Pool, LinkedListNode<GameObject>>(t, node));
         return node.Value;
     }
@@ -40,7 +40,7 @@ public static class PoolManager
 
     #region Instantiate Overloads
 
-    public static GameObject Instantiate(GameObject prefab,Transform parent)
+    public static GameObject Instantiate(GameObject prefab, Transform parent)
     {
         GameObject obj = Instantiate(prefab);
 
@@ -49,7 +49,7 @@ public static class PoolManager
     }
 
 
-    public static GameObject Instantiate(GameObject prefab,Vector3 position,Quaternion rotation)
+    public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation)
     {
         GameObject obj = Instantiate(prefab);
 
@@ -58,7 +58,7 @@ public static class PoolManager
 
         return obj;
     }
-    public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation,Transform parent)
+    public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
     {
         GameObject obj = Instantiate(prefab);
         obj.transform.parent = parent;
@@ -67,7 +67,7 @@ public static class PoolManager
         return obj;
     }
 
-    public static GameObject Instantiate(GameObject prefab, Transform parent,bool instantiateInWorldSpace)
+    public static GameObject Instantiate(GameObject prefab, Transform parent, bool instantiateInWorldSpace)
     {
         GameObject obj = Instantiate(prefab);
 
@@ -83,7 +83,7 @@ public static class PoolManager
 
 
 
-    public static Pool CreatePool(GameObject prefab,int poolSize)
+    public static Pool CreatePool(GameObject prefab, int poolSize)
     {
         Pool newPool;
         if (pools.ContainsKey(prefab))
@@ -112,7 +112,7 @@ public static class PoolManager
     }
 
     /// <param name="poolSize">Size of the object pool of this prefab.</param>
-    public static GameObject Instantiate(GameObject prefab,int poolSize)
+    public static GameObject Instantiate(GameObject prefab, int poolSize)
     {
         Pool t;
         if (!pools.ContainsKey(prefab))
@@ -138,7 +138,7 @@ public static class PoolManager
         Pool t;
         if (!pools.ContainsKey(prefab))
         {
-            pools.Add(prefab,t=new Pool());
+            pools.Add(prefab, t = new Pool());
         }
         else
         {
@@ -159,7 +159,7 @@ public static class PoolManager
     /// <summary>
     /// Sets the number of active objects in the pool for the prefab at any given time
     /// </summary>
-    public static void SetPoolSize(GameObject prefab,int size)
+    public static void SetPoolSize(GameObject prefab, int size)
     {
         Pool t;
         if (!pools.ContainsKey(prefab))
@@ -209,9 +209,9 @@ public static class PoolManager
         if (nodes.ContainsKey(obj))
         {
             Pool pool = nodes[obj].Key;
-            LinkedListNode<GameObject> node=nodes[obj].Value;
+            LinkedListNode<GameObject> node = nodes[obj].Value;
 
-            if (pool.totalCount > pool.netPoolSize)
+            if (pool.totalCount > pool.netPoolSize && !pool.growing)
             {
                 pool.RemoveObjectFromPool(node);
                 Object.Destroy(obj);
@@ -225,7 +225,7 @@ public static class PoolManager
             Object.Destroy(obj);
     }
 
-    public  class Pool
+    public class Pool
     {
         /// <summary>
         /// If set true the pool will not forcefully recycle gameObjects if pool is full
@@ -247,7 +247,7 @@ public static class PoolManager
         /// <summary>
         /// Linked list corresponding to the active gameObjects in the pool
         /// </summary>
-        public LinkedList<GameObject> activeObjects=new LinkedList<GameObject>();
+        public LinkedList<GameObject> activeObjects = new LinkedList<GameObject>();
         /// <summary>
         /// Linked list corresponding to the objects which have been "Destroyed" and is waiting in pool to be reused
         /// </summary>
@@ -257,7 +257,7 @@ public static class PoolManager
         public Pool()
         {
             poolSize = globalPoolSize;
-            netPoolSize = Mathf.Max(globalNetPoolSize,globalPoolSize);
+            netPoolSize = Mathf.Max(globalNetPoolSize, globalPoolSize);
         }
 
         public Pool(int poolSize)
@@ -330,7 +330,7 @@ public static class PoolManager
 
 
         /// <summary>
-        /// Destroys all inactive GameObjects in the pool.
+        /// Destroys all inactive GameObjects in the pool with Object.Destroy be careful when using this.
         /// </summary>
         public void ClearInactive()
         {

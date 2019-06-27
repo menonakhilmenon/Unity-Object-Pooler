@@ -37,6 +37,11 @@ public static class PoolManager
         return node.Value;
     }
 
+    public static void InitializePool(GameObject prefab,int count,bool dontDestroyOnLoad)
+    {
+        GetPool(prefab).FillPool(prefab,count,dontDestroyOnLoad);
+    }
+
 
     #region Instantiate Overloads
 
@@ -231,6 +236,7 @@ public static class PoolManager
         /// If set true the pool will not forcefully recycle gameObjects if pool is full
         /// </summary>
         public bool growing = true;
+        public bool persistent = false;
         public int poolSize = 10;
         public int netPoolSize = 30;
 
@@ -266,6 +272,20 @@ public static class PoolManager
         }
 
 
+        public void FillPool(GameObject gameObject,int count,bool dontDestroyOnLoad)
+        {
+            if (dontDestroyOnLoad)
+                persistent = true;
+            count = count - inactiveObjects.Count;
+            for (int i = 0; i < count; i++)
+            {
+                inactiveObjects.AddLast(new LinkedListNode<GameObject>(Object.Instantiate(gameObject)));
+                if (dontDestroyOnLoad)
+                    Object.DontDestroyOnLoad(inactiveObjects.Last.Value);
+                inactiveObjects.Last.Value.SetActive(false);
+            }
+        }
+
         public LinkedListNode<GameObject> InsertToPool(GameObject gameObject)
         {
             LinkedListNode<GameObject> node;
@@ -287,7 +307,14 @@ public static class PoolManager
                 node = new LinkedListNode<GameObject>(Object.Instantiate(gameObject));
                 activeObjects.AddLast(node);
             }
+            if (persistent)
+                Object.DontDestroyOnLoad(node.Value);
             return node;
+        }
+        public void DestroyAll()
+        {
+            while (activeObjects.Count > 0)
+                Destroy();
         }
         public void Destroy()
         {

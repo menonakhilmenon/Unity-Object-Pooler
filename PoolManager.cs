@@ -213,6 +213,7 @@ public static class PoolManager
     {
         if (nodes.ContainsKey(obj))
         {
+
             Pool pool = nodes[obj].Key;
             LinkedListNode<GameObject> node = nodes[obj].Value;
 
@@ -282,6 +283,8 @@ public static class PoolManager
                 inactiveObjects.AddLast(new LinkedListNode<GameObject>(Object.Instantiate(gameObject)));
                 if (dontDestroyOnLoad)
                     Object.DontDestroyOnLoad(inactiveObjects.Last.Value);
+                PoolManager.pools.Add(inactiveObjects.Last.Value, this);
+                PoolManager.nodes.Add(inactiveObjects.Last.Value, new KeyValuePair<Pool, LinkedListNode<GameObject>>(this, inactiveObjects.Last));
                 inactiveObjects.Last.Value.SetActive(false);
             }
         }

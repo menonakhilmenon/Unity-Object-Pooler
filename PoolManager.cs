@@ -37,9 +37,9 @@ public static class PoolManager
         return node.Value;
     }
 
-    public static void InitializePool(GameObject prefab,int count,bool dontDestroyOnLoad)
+    public static void InitializePool(GameObject prefab, int count, bool dontDestroyOnLoad)
     {
-        GetPool(prefab).FillPool(prefab,count,dontDestroyOnLoad);
+        GetPool(prefab).FillPool(prefab, count, dontDestroyOnLoad);
     }
 
 
@@ -213,7 +213,6 @@ public static class PoolManager
     {
         if (nodes.ContainsKey(obj))
         {
-
             Pool pool = nodes[obj].Key;
             LinkedListNode<GameObject> node = nodes[obj].Value;
 
@@ -273,7 +272,7 @@ public static class PoolManager
         }
 
 
-        public void FillPool(GameObject gameObject,int count,bool dontDestroyOnLoad)
+        public void FillPool(GameObject gameObject, int count, bool dontDestroyOnLoad)
         {
             if (dontDestroyOnLoad)
                 persistent = true;
@@ -283,8 +282,6 @@ public static class PoolManager
                 inactiveObjects.AddLast(new LinkedListNode<GameObject>(Object.Instantiate(gameObject)));
                 if (dontDestroyOnLoad)
                     Object.DontDestroyOnLoad(inactiveObjects.Last.Value);
-                PoolManager.pools.Add(inactiveObjects.Last.Value, this);
-                PoolManager.nodes.Add(inactiveObjects.Last.Value, new KeyValuePair<Pool, LinkedListNode<GameObject>>(this, inactiveObjects.Last));
                 inactiveObjects.Last.Value.SetActive(false);
             }
         }
@@ -367,6 +364,7 @@ public static class PoolManager
             while (inactiveObjects.Count != 0)
             {
                 GameObject obj = inactiveObjects.First.Value;
+                nodes.Remove(obj);
                 inactiveObjects.RemoveFirst();
                 Object.Destroy(obj);
             }

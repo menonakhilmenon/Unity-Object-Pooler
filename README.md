@@ -1,7 +1,7 @@
 # Unity-Object-Pooler
 A simple implementation of Game Object pooling mechanism for Unity
 
-#IMPORTANT!!
+# IMPORTANT!!
 
 This implementation was designed for mainly single scene games which persist throughout the session and only disables the gameObject when PoolManager.Destroy is called. So if you are unloading scenes make sure you manually clear the references in the PoolManager script.
 
